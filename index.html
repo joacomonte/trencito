@@ -31,6 +31,10 @@
     .station-btn:active { transform: scale(.97); box-shadow: none }
     .station-btn:disabled { opacity: .4; pointer-events: none }
     .station-dot { flex: none; width: 1rem; height: 1rem; border-radius: 9999px }
+    .station-btn--ghost {
+      min-height: 3.5rem; padding: .625rem 1.25rem;
+      background: transparent; border-style: dashed; box-shadow: none;
+    }
   </style>
   <script>
     function app() {
@@ -45,6 +49,7 @@
         get terminal() { return this.dir === 1 ? S.length - 1 : 0 },
         get intermedias() {
           const list = [];
+          if (!this.dir) return list;
           for (let i = this.o + this.dir; i !== this.terminal && i >= 0 && i < S.length; i += this.dir) list.push(i);
           return list;
         },
@@ -88,8 +93,9 @@
       <p class="text-sm text-muted-foreground" x-show="step < 3">¿Cuánto falta para llegar?</p>
     </header>
 
-    <section x-show="step === 1" class="flex-1 flex flex-col justify-end gap-3 pb-12">
+    <section x-show="step === 1" class="flex-1 flex flex-col justify-center gap-3 pt-16">
       <h2 class="font-bold text-3xl tracking-tight text-center mb-4">¿En qué estación<br>estás?</h2>
+      <div class="flex flex-col gap-3 min-h-[16.5rem]">
       <button id="btn-origen-lacroze" class="station-btn" @click="origin = 0; step = 2">
         <span class="station-dot bg-primary"></span>
         <span class="flex-1 text-left">
@@ -106,12 +112,8 @@
         </span>
         <span class="text-muted-foreground text-xl">›</span>
       </button>
-      <label for="sel-origen" class="station-btn relative">
-        <span class="station-dot border-2 border-dashed border-muted-foreground/50"></span>
-        <span class="flex-1 text-left">
-          <span class="block text-2xl font-semibold leading-tight text-muted-foreground">Otra estación</span>
-          <span class="block text-sm text-muted-foreground">Elegí de la lista</span>
-        </span>
+      <label for="sel-origen" class="station-btn station-btn--ghost relative mt-1">
+        <span class="flex-1 text-left text-lg text-muted-foreground">Otra estación…</span>
         <span class="text-muted-foreground text-xl">⌄</span>
         <select id="sel-origen" class="absolute inset-0 opacity-0 w-full h-full" x-model="origin" @change="step = 2">
           <option value="" disabled selected>Otra estación…</option>
@@ -120,12 +122,14 @@
           </template>
         </select>
       </label>
+      </div>
     </section>
 
-    <section x-show="step === 2" class="flex-1 flex flex-col justify-end gap-3 pb-12">
+    <section x-show="step === 2" class="flex-1 flex flex-col justify-center gap-3 pt-16">
       <p class="text-center text-sm text-muted-foreground">Estás en <strong class="text-foreground" x-text="S[o]"></strong></p>
       <h2 class="font-bold text-3xl tracking-tight text-center mb-4">¿Dónde te bajás?</h2>
-      <button id="btn-dest-lemos" class="station-btn" :disabled="o === S.length - 1" @click="elegir(S.length - 1)">
+      <div class="flex flex-col gap-3 min-h-[16.5rem]">
+      <button id="btn-dest-lemos" class="station-btn" x-show="o !== S.length - 1" @click="elegir(S.length - 1)">
         <span class="station-dot bg-primary"></span>
         <span class="flex-1 text-left">
           <span class="block text-2xl font-semibold leading-tight">General Lemos</span>
@@ -133,7 +137,7 @@
         </span>
         <span class="text-muted-foreground text-xl">›</span>
       </button>
-      <button id="btn-dest-lacroze" class="station-btn" :disabled="o === 0" @click="elegir(0)">
+      <button id="btn-dest-lacroze" class="station-btn" x-show="o !== 0" @click="elegir(0)">
         <span class="station-dot bg-primary"></span>
         <span class="flex-1 text-left">
           <span class="block text-2xl font-semibold leading-tight">Federico Lacroze</span>
@@ -141,12 +145,8 @@
         </span>
         <span class="text-muted-foreground text-xl">›</span>
       </button>
-      <label for="sel-destino" class="station-btn relative">
-        <span class="station-dot border-2 border-dashed border-muted-foreground/50"></span>
-        <span class="flex-1 text-left">
-          <span class="block text-2xl font-semibold leading-tight text-muted-foreground">Otra estación</span>
-          <span class="block text-sm text-muted-foreground">Elegí de la lista</span>
-        </span>
+      <label for="sel-destino" class="station-btn station-btn--ghost relative mt-1">
+        <span class="flex-1 text-left text-lg text-muted-foreground">Otra estación…</span>
         <span class="text-muted-foreground text-xl">⌄</span>
         <select id="sel-destino" class="absolute inset-0 opacity-0 w-full h-full" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
           <option value="" disabled selected>Otra estación…</option>
@@ -155,6 +155,7 @@
           </template>
         </select>
       </label>
+      </div>
     </section>
 
     <section x-show="step === 3" class="flex-1 flex flex-col gap-5" x-cloak>
