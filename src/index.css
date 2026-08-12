@@ -219,7 +219,7 @@ body {
   left: 0;
   right: 0;
   bottom: 12px;
-  height: 68px;
+  height: 88px;
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='68' viewBox='0 0 280 68'><g fill='%2377716A' fill-opacity='.28'><rect x='0' y='26' width='34' height='42'/><rect x='40' y='10' width='26' height='58'/><line x1='53' y1='10' x2='53' y2='2' stroke='%2377716A' stroke-opacity='.28' stroke-width='2'/><rect x='72' y='34' width='40' height='34'/><rect x='126' y='16' width='22' height='52'/><rect x='158' y='30' width='36' height='38'/><rect x='206' y='6' width='28' height='62'/><rect x='240' y='38' width='30' height='30'/></g></svg>");
   background-repeat: repeat-x;
   background-position-y: bottom;
@@ -283,23 +283,67 @@ body {
   font-size: 2.25rem;
   animation: rayo-2 6s linear infinite;
 }
+/* pastilla translúcida con los 4 climas: solo iconos, el activo se marca con una
+   cápsula blanca adentro del grupo */
 .scene-clima {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
   z-index: 10;
-  font-size: 0.75rem;
-  padding: 0.25rem 1.5rem 0.25rem 0.625rem;
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.3125rem;
   border-radius: 9999px;
-  background: rgb(255 255 255 / 0.8);
-  border: 1px solid var(--color-border);
-  color: var(--color-foreground);
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2377716A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 0.375rem center;
-  background-size: 0.75rem;
+  background: rgb(255 255 255 / 0.45);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* 2.75rem = 44px de área táctil por icono; el drop-shadow es lo que despega el emoji
+   del cielo, que a veces le queda casi del mismo tono */
+.scene-clima-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  filter: grayscale(0.45) drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+  transition:
+    opacity 0.15s,
+    filter 0.15s,
+    background 0.15s;
+}
+.scene-clima-btn.is-on {
+  opacity: 1;
+  filter: contrast(1.1) drop-shadow(0 1px 2px rgb(0 0 0 / 0.3));
+  background: rgb(255 255 255 / 0.95);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+}
+/* misma pastilla que el select de clima, arriba a la izquierda: solo aparece con lluvia
+   o tormenta, o sea nunca al mismo tiempo que el sol */
+.scene-mute {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 10;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.375rem;
+  line-height: 1;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.45);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
 }
 .scene-rail {
   position: absolute;

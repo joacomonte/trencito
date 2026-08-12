@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSonidoClima } from './useSonidoClima'
 
 type Clima = 'soleado' | 'nublado' | 'lluvia' | 'tormenta'
 type Step = 1 | 2 | 3
@@ -60,6 +61,13 @@ function minutosEntre(desde: number, hasta: number): number {
   for (let i = lo; i < hi; i++) total += tramos[i]
   return total
 }
+
+const CLIMAS: { valor: Clima; icono: string; label: string }[] = [
+  { valor: 'soleado', icono: '☀️', label: 'Soleado' },
+  { valor: 'nublado', icono: '☁️', label: 'Nublado' },
+  { valor: 'lluvia', icono: '🌧️', label: 'Lluvia' },
+  { valor: 'tormenta', icono: '⛈️', label: 'Tormenta' },
+]
 
 const CARET = (
   <svg
@@ -139,23 +147,49 @@ function Scene({
   dir: number
   detenido: boolean
 }) {
+  const [mute, setMute] = useState(() => localStorage.getItem('mute') === '1')
+  const llueve = clima === 'lluvia' || clima === 'tormenta'
+  useSonidoClima(llueve, clima === 'tormenta', mute)
+
+  function toggleMute() {
+    setMute((m) => {
+      localStorage.setItem('mute', m ? '0' : '1')
+      return !m
+    })
+  }
+
   const clases = ['scene', `scene--${clima}`]
   if (dir === -1) clases.push('scene--rev')
   if (detenido) clases.push('scene--stop')
   return (
     <div className={clases.join(' ')}>
-      <select
-        id="sel-clima"
-        className="scene-clima"
-        value={clima}
-        onChange={(e) => onClima(e.target.value as Clima)}
-        aria-label="Clima"
-      >
-        <option value="soleado">☀️ Soleado</option>
-        <option value="nublado">☁️ Nublado</option>
-        <option value="lluvia">🌧️ Lluvia</option>
-        <option value="tormenta">⛈️ Tormenta</option>
-      </select>
+      {llueve && (
+        <button
+          id="btn-mute"
+          type="button"
+          className="scene-mute"
+          onClick={toggleMute}
+          aria-label={mute ? 'Activar sonido de lluvia' : 'Silenciar sonido de lluvia'}
+          aria-pressed={mute}
+        >
+          {mute ? '🔇' : '🔊'}
+        </button>
+      )}
+      <div className="scene-clima" role="group" aria-label="Clima">
+        {CLIMAS.map(({ valor, icono, label }) => (
+          <button
+            key={valor}
+            id={`btn-clima-${valor}`}
+            type="button"
+            className={`scene-clima-btn${clima === valor ? ' is-on' : ''}`}
+            onClick={() => onClima(valor)}
+            aria-label={label}
+            aria-pressed={clima === valor}
+          >
+            {icono}
+          </button>
+        ))}
+      </div>
       <span className="scene-sol">☀️</span>
       <div className="scene-nubes" />
       <div className="scene-edificios" />
@@ -199,13 +233,6 @@ export default function App() {
     setViaje({ t0, etaTs: t0 + minutosEntre(origin, i) * 60000 })
     setNow(t0)
     setStep(3)
-  }
-
-  function reset() {
-    setStep(1)
-    setOrigin(null)
-    setDest(null)
-    setViaje(null)
   }
 
   const restanteMs = viaje ? Math.max(0, viaje.etaTs - now) : 0
@@ -314,7 +341,7 @@ export default function App() {
             <span className="sign text-sm uppercase">{STATIONS[dest].nombre}</span>
           </p>
 
-          <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card text-center shadow-sm">
+          <div className="relative flex min-h-[24rem] flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card text-center shadow-sm">
             <Scene clima={clima} onClima={setClima} dir={dir} detenido={llegue} />
             {llegue ? (
               <div className="scene-content pop flex flex-1 flex-col justify-center gap-2 px-6 pt-8 pb-28">
@@ -390,14 +417,6 @@ export default function App() {
               </div>
             </div>
           )}
-
-          <button
-            id="btn-reset"
-            className="btn mt-auto h-16 w-full rounded-2xl border border-border text-xl"
-            onClick={reset}
-          >
-            ↺ Nuevo viaje
-          </button>
         </section>
       )}
 
