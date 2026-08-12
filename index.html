@@ -73,7 +73,7 @@
     <header class="relative text-center space-y-1">
       <button id="btn-back" x-show="step > 1" class="btn absolute left-0 top-0 size-12 rounded-full text-2xl" data-variant="secondary" @click="step--" aria-label="Volver">←</button>
       <h1 class="text-2xl font-bold tracking-tight">🚆 Tren Urquiza</h1>
-      <p class="text-sm text-muted-foreground" x-show="step < 4">¿Cuánto falta para llegar?</p>
+      <p class="text-sm text-muted-foreground" x-show="step < 3">¿Cuánto falta para llegar?</p>
     </header>
 
     <section x-show="step === 1" class="flex-1 flex flex-col gap-4 pt-4">
@@ -89,25 +89,18 @@
     </section>
 
     <section x-show="step === 2" class="flex-1 flex flex-col gap-4 pt-4">
-      <h2 class="font-bold text-2xl tracking-tight mb-1">¿Hacia dónde vas?</h2>
-      <button id="btn-dir-lemos" class="btn w-full h-20 text-xl rounded-2xl" :disabled="o === S.length - 1" @click="elegirDir(1)">→ General Lemos</button>
-      <button id="btn-dir-lacroze" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" :disabled="o === 0" @click="elegirDir(-1)">→ Federico Lacroze</button>
-    </section>
-
-    <section x-show="step === 3" class="flex-1 flex flex-col gap-4 pt-4">
       <h2 class="font-bold text-2xl tracking-tight mb-1">¿Dónde te bajás?</h2>
-      <button id="btn-terminal" class="btn w-full h-24 text-2xl rounded-2xl" @click="elegir(terminal)">
-        🏁 <span x-text="S[terminal]"></span>
-      </button>
+      <button id="btn-dest-lemos" class="btn w-full h-20 text-xl rounded-2xl" :disabled="o === S.length - 1" @click="elegir(S.length - 1)">🏁 General Lemos</button>
+      <button id="btn-dest-lacroze" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" :disabled="o === 0" @click="elegir(0)">🏁 Federico Lacroze</button>
       <select id="sel-destino" class="select w-full h-14 text-lg rounded-2xl" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
         <option value="" disabled selected>Otra estación…</option>
-        <template x-for="i in intermedias" :key="i">
-          <option :value="i" x-text="S[i]"></option>
+        <template x-for="(n, i) in S" :key="i">
+          <option :value="i" x-text="n" :disabled="i === o"></option>
         </template>
       </select>
     </section>
 
-    <section x-show="step === 4" class="flex-1 flex flex-col gap-5" x-cloak>
+    <section x-show="step === 3" class="flex-1 flex flex-col gap-5" x-cloak>
       <p class="text-center text-base text-muted-foreground">
         <span x-text="S[o]"></span> → <span class="font-medium text-foreground" x-text="S[dest]"></span>
       </p>
@@ -140,7 +133,7 @@
       <button id="btn-reset" class="btn w-full h-14 text-lg rounded-2xl mt-auto" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
     </section>
 
-    <p class="text-center text-xs text-muted-foreground" x-show="step === 4">Estimación prorrateada: 48 min punta a punta.</p>
+    <p class="text-center text-xs text-muted-foreground" x-show="step === 3">Estimación prorrateada: 48 min punta a punta.</p>
   </main>
 
   <!-- Toaster global: dispará con document.getElementById('toaster').toast({...}) -->
