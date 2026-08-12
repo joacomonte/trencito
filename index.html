@@ -14,7 +14,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/basecoat.cdn.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/js/all.min.js" defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-  <style>[x-cloak]{display:none!important}</style>
+  <style>
+    [x-cloak]{display:none!important}
+    button, select { touch-action: manipulation; -webkit-tap-highlight-color: transparent }
+    .btn { transition: transform .1s ease }
+    .btn:active { transform: scale(.97) }
+  </style>
   <script>
     function app() {
       const S = ['Federico Lacroze','Artigas','Arata','Francisco Beiró','El Libertador','Devoto','Lynch','Fernández Moreno','Lourdes','Tropezón','J.M. Bosch','Martín Coronado','Pablo Podestá','Jorge Newbery','Rubén Darío','Ejército de los Andes','Lasalle','Sargento Barrufaldi','Capitán Lozano','Teniente Agneta','Campo de Mayo','Sargento Cabral','General Lemos'];
@@ -61,20 +66,21 @@
     }
   </script>
 </head>
-<body class="bg-background text-foreground min-h-screen">
+<body class="bg-background text-foreground antialiased">
 
-  <main x-data="app()" x-cloak class="max-w-sm mx-auto p-5 pt-8 space-y-6">
+  <main x-data="app()" x-cloak class="min-h-dvh max-w-md mx-auto flex flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] gap-5">
 
-    <header class="text-center space-y-1">
-      <h1 class="text-2xl font-bold">🚆 Tren Urquiza</h1>
+    <header class="relative text-center space-y-1">
+      <button id="btn-back" x-show="step > 1" class="btn absolute left-0 top-0 size-12 rounded-full text-2xl" data-variant="secondary" @click="step--" aria-label="Volver">←</button>
+      <h1 class="text-2xl font-bold tracking-tight">🚆 Tren Urquiza</h1>
       <p class="text-sm text-muted-foreground" x-show="step < 4">¿Cuánto falta para llegar?</p>
     </header>
 
-    <section x-show="step === 1" class="space-y-3">
-      <h2 class="font-semibold text-lg">¿En qué estación estás?</h2>
-      <button id="btn-origen-lacroze" class="btn w-full h-16 text-lg" @click="origin = 0; step = 2">Federico Lacroze</button>
-      <button id="btn-origen-lemos" class="btn w-full h-16 text-lg" data-variant="secondary" @click="origin = S.length - 1; step = 2">General Lemos</button>
-      <select id="sel-origen" class="select w-full h-12 text-base" x-model="origin" @change="step = 2">
+    <section x-show="step === 1" class="flex-1 flex flex-col gap-4 pt-4">
+      <h2 class="font-bold text-2xl tracking-tight mb-1">¿En qué estación estás?</h2>
+      <button id="btn-origen-lacroze" class="btn w-full h-20 text-xl rounded-2xl" @click="origin = 0; step = 2">Federico Lacroze</button>
+      <button id="btn-origen-lemos" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" @click="origin = S.length - 1; step = 2">General Lemos</button>
+      <select id="sel-origen" class="select w-full h-14 text-lg rounded-2xl" x-model="origin" @change="step = 2">
         <option value="" disabled selected>Otra estación…</option>
         <template x-for="(n, i) in S" :key="i">
           <option :value="i" x-text="n"></option>
@@ -82,35 +88,31 @@
       </select>
     </section>
 
-    <section x-show="step === 2" class="space-y-3">
-      <h2 class="font-semibold text-lg">¿Hacia dónde vas?</h2>
-      <div class="grid gap-3">
-        <button id="btn-dir-lemos" class="btn h-16 text-lg" :disabled="o === S.length - 1" @click="elegirDir(1)">→ General Lemos</button>
-        <button id="btn-dir-lacroze" class="btn h-16 text-lg" data-variant="secondary" :disabled="o === 0" @click="elegirDir(-1)">→ Federico Lacroze</button>
-      </div>
-      <button class="btn w-full" data-variant="ghost" @click="step = 1">← Volver</button>
+    <section x-show="step === 2" class="flex-1 flex flex-col gap-4 pt-4">
+      <h2 class="font-bold text-2xl tracking-tight mb-1">¿Hacia dónde vas?</h2>
+      <button id="btn-dir-lemos" class="btn w-full h-20 text-xl rounded-2xl" :disabled="o === S.length - 1" @click="elegirDir(1)">→ General Lemos</button>
+      <button id="btn-dir-lacroze" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" :disabled="o === 0" @click="elegirDir(-1)">→ Federico Lacroze</button>
     </section>
 
-    <section x-show="step === 3" class="space-y-3">
-      <h2 class="font-semibold text-lg">¿Dónde te bajás?</h2>
-      <button id="btn-terminal" class="btn w-full h-20 text-xl" @click="elegir(terminal)">
+    <section x-show="step === 3" class="flex-1 flex flex-col gap-4 pt-4">
+      <h2 class="font-bold text-2xl tracking-tight mb-1">¿Dónde te bajás?</h2>
+      <button id="btn-terminal" class="btn w-full h-24 text-2xl rounded-2xl" @click="elegir(terminal)">
         🏁 <span x-text="S[terminal]"></span>
       </button>
-      <select id="sel-destino" class="select w-full h-12 text-base" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
+      <select id="sel-destino" class="select w-full h-14 text-lg rounded-2xl" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
         <option value="" disabled selected>Otra estación…</option>
         <template x-for="i in intermedias" :key="i">
           <option :value="i" x-text="S[i]"></option>
         </template>
       </select>
-      <button class="btn w-full" data-variant="ghost" @click="step = 2">← Volver</button>
     </section>
 
-    <section x-show="step === 4" class="space-y-5" x-cloak>
-      <p class="text-center text-sm text-muted-foreground">
+    <section x-show="step === 4" class="flex-1 flex flex-col gap-5" x-cloak>
+      <p class="text-center text-base text-muted-foreground">
         <span x-text="S[o]"></span> → <span class="font-medium text-foreground" x-text="S[dest]"></span>
       </p>
 
-      <div class="card text-center py-8 space-y-2">
+      <div class="card flex-1 flex flex-col justify-center text-center py-8 space-y-2">
         <template x-if="!llegue">
           <div class="space-y-2">
             <p class="text-6xl font-bold tabular-nums">
@@ -135,7 +137,7 @@
         <p class="text-xs text-muted-foreground text-center">Ahora estarías cerca de <strong x-text="posActual"></strong></p>
       </div>
 
-      <button id="btn-reset" class="btn w-full h-12" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
+      <button id="btn-reset" class="btn w-full h-14 text-lg rounded-2xl mt-auto" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
     </section>
 
     <p class="text-center text-xs text-muted-foreground" x-show="step === 4">Estimación prorrateada: 48 min punta a punta.</p>
