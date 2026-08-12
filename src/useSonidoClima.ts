@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Sonido de lluvia + truenos, atado al clima de la escena.
@@ -29,8 +29,30 @@ export function useSonidoClima(llueve: boolean, tormenta: boolean, mute: boolean
   const muteRef = useRef(mute)
   muteRef.current = mute
 
+  // Al mandar el browser a background (cambiar de app, minimizar, cambiar de pestaña) el
+  // audio sigue sonando por su cuenta: hay que pausarlo a mano. `pagehide` es para iOS
+  // Safari, que al volver de bfcache no siempre dispara visibilitychange.
+  const [oculto, setOculto] = useState(() => document.hidden)
   useEffect(() => {
-    if (!llueve || mute) {
+    // El trueno se corta acá y no por el efecto de abajo porque es un one-shot: no tiene
+    // un "estado sonando" del que dependa un effect.
+    const ocultar = () => {
+      setOculto(true)
+      truenoRef.current?.pause()
+    }
+    const sync = () => (document.hidden ? ocultar() : setOculto(false))
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('pagehide', ocultar)
+    window.addEventListener('pageshow', sync)
+    return () => {
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('pagehide', ocultar)
+      window.removeEventListener('pageshow', sync)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!llueve || mute || oculto) {
       lluviaRef.current?.pause()
       return
     }
@@ -43,7 +65,7 @@ export function useSonidoClima(llueve: boolean, tormenta: boolean, mute: boolean
     a.volume = tormenta ? VOL_LLUVIA_TORMENTA : VOL_LLUVIA
     // Si el navegador igual lo rechaza, el botón de mute sirve de reintento.
     void a.play().catch(() => {})
-  }, [llueve, tormenta, mute])
+  }, [llueve, tormenta, mute, oculto])
 
   useEffect(() => {
     if (!tormenta) return
@@ -54,7 +76,7 @@ export function useSonidoClima(llueve: boolean, tormenta: boolean, mute: boolean
       for (const t of TRUENOS_MS) {
         pendientes.push(
           window.setTimeout(() => {
-            if (muteRef.current) return
+            if (muteRef.current || document.hidden) return
             if (!truenoRef.current) truenoRef.current = new Audio('/audio/trueno.m4a')
             const a = truenoRef.current
             a.volume = VOL_TRUENO
