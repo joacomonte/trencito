@@ -19,6 +19,18 @@
     button, select { touch-action: manipulation; -webkit-tap-highlight-color: transparent }
     .btn { transition: transform .1s ease }
     .btn:active { transform: scale(.97) }
+    .station-btn {
+      display: flex; align-items: center; gap: 1rem; width: 100%;
+      min-height: 5.5rem; padding: 1rem 1.25rem;
+      border: 1px solid var(--border); border-radius: 1.25rem;
+      background: var(--card); color: var(--card-foreground);
+      box-shadow: 0 1px 3px rgb(0 0 0 / .06);
+      transition: transform .1s ease, box-shadow .1s ease;
+      cursor: pointer;
+    }
+    .station-btn:active { transform: scale(.97); box-shadow: none }
+    .station-btn:disabled { opacity: .4; pointer-events: none }
+    .station-dot { flex: none; width: 1rem; height: 1rem; border-radius: 9999px }
   </style>
   <script>
     function app() {
@@ -71,33 +83,78 @@
   <main x-data="app()" x-cloak class="min-h-dvh max-w-md mx-auto flex flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] gap-5">
 
     <header class="relative text-center space-y-1">
-      <button id="btn-back" x-show="step > 1" class="btn absolute left-0 top-0 size-12 rounded-full text-2xl" data-variant="secondary" @click="step--" aria-label="Volver">←</button>
+      <button id="btn-back" x-show="step > 1" class="btn absolute left-0 top-0 size-14 rounded-full text-3xl" data-variant="secondary" @click="step--" aria-label="Volver">←</button>
       <h1 class="text-2xl font-bold tracking-tight">🚆 Tren Urquiza</h1>
       <p class="text-sm text-muted-foreground" x-show="step < 3">¿Cuánto falta para llegar?</p>
     </header>
 
-    <section x-show="step === 1" class="flex-1 flex flex-col gap-4 pt-4">
-      <h2 class="font-bold text-2xl tracking-tight mb-1">¿En qué estación estás?</h2>
-      <button id="btn-origen-lacroze" class="btn w-full h-20 text-xl rounded-2xl" @click="origin = 0; step = 2">Federico Lacroze</button>
-      <button id="btn-origen-lemos" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" @click="origin = S.length - 1; step = 2">General Lemos</button>
-      <select id="sel-origen" class="select w-full h-14 text-lg rounded-2xl" x-model="origin" @change="step = 2">
-        <option value="" disabled selected>Otra estación…</option>
-        <template x-for="(n, i) in S" :key="i">
-          <option :value="i" x-text="n"></option>
-        </template>
-      </select>
+    <section x-show="step === 1" class="flex-1 flex flex-col justify-end gap-3 pb-12">
+      <h2 class="font-bold text-3xl tracking-tight text-center mb-4">¿En qué estación<br>estás?</h2>
+      <button id="btn-origen-lacroze" class="station-btn" @click="origin = 0; step = 2">
+        <span class="station-dot bg-primary"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight">Federico Lacroze</span>
+          <span class="block text-sm text-muted-foreground">Colegiales</span>
+        </span>
+        <span class="text-muted-foreground text-xl">›</span>
+      </button>
+      <button id="btn-origen-lemos" class="station-btn" @click="origin = S.length - 1; step = 2">
+        <span class="station-dot bg-primary"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight">General Lemos</span>
+          <span class="block text-sm text-muted-foreground">San Miguel</span>
+        </span>
+        <span class="text-muted-foreground text-xl">›</span>
+      </button>
+      <label for="sel-origen" class="station-btn relative">
+        <span class="station-dot border-2 border-dashed border-muted-foreground/50"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight text-muted-foreground">Otra estación</span>
+          <span class="block text-sm text-muted-foreground">Elegí de la lista</span>
+        </span>
+        <span class="text-muted-foreground text-xl">⌄</span>
+        <select id="sel-origen" class="absolute inset-0 opacity-0 w-full h-full" x-model="origin" @change="step = 2">
+          <option value="" disabled selected>Otra estación…</option>
+          <template x-for="(n, i) in S" :key="i">
+            <option :value="i" x-text="n"></option>
+          </template>
+        </select>
+      </label>
     </section>
 
-    <section x-show="step === 2" class="flex-1 flex flex-col gap-4 pt-4">
-      <h2 class="font-bold text-2xl tracking-tight mb-1">¿Dónde te bajás?</h2>
-      <button id="btn-dest-lemos" class="btn w-full h-20 text-xl rounded-2xl" :disabled="o === S.length - 1" @click="elegir(S.length - 1)">🏁 General Lemos</button>
-      <button id="btn-dest-lacroze" class="btn w-full h-20 text-xl rounded-2xl" data-variant="secondary" :disabled="o === 0" @click="elegir(0)">🏁 Federico Lacroze</button>
-      <select id="sel-destino" class="select w-full h-14 text-lg rounded-2xl" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
-        <option value="" disabled selected>Otra estación…</option>
-        <template x-for="(n, i) in S" :key="i">
-          <option :value="i" x-text="n" :disabled="i === o"></option>
-        </template>
-      </select>
+    <section x-show="step === 2" class="flex-1 flex flex-col justify-end gap-3 pb-12">
+      <p class="text-center text-sm text-muted-foreground">Estás en <strong class="text-foreground" x-text="S[o]"></strong></p>
+      <h2 class="font-bold text-3xl tracking-tight text-center mb-4">¿Dónde te bajás?</h2>
+      <button id="btn-dest-lemos" class="station-btn" :disabled="o === S.length - 1" @click="elegir(S.length - 1)">
+        <span class="station-dot bg-primary"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight">General Lemos</span>
+          <span class="block text-sm text-muted-foreground">San Miguel</span>
+        </span>
+        <span class="text-muted-foreground text-xl">›</span>
+      </button>
+      <button id="btn-dest-lacroze" class="station-btn" :disabled="o === 0" @click="elegir(0)">
+        <span class="station-dot bg-primary"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight">Federico Lacroze</span>
+          <span class="block text-sm text-muted-foreground">Colegiales</span>
+        </span>
+        <span class="text-muted-foreground text-xl">›</span>
+      </button>
+      <label for="sel-destino" class="station-btn relative">
+        <span class="station-dot border-2 border-dashed border-muted-foreground/50"></span>
+        <span class="flex-1 text-left">
+          <span class="block text-2xl font-semibold leading-tight text-muted-foreground">Otra estación</span>
+          <span class="block text-sm text-muted-foreground">Elegí de la lista</span>
+        </span>
+        <span class="text-muted-foreground text-xl">⌄</span>
+        <select id="sel-destino" class="absolute inset-0 opacity-0 w-full h-full" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
+          <option value="" disabled selected>Otra estación…</option>
+          <template x-for="(n, i) in S" :key="i">
+            <option :value="i" x-text="n" :disabled="i === o"></option>
+          </template>
+        </select>
+      </label>
     </section>
 
     <section x-show="step === 3" class="flex-1 flex flex-col gap-5" x-cloak>
@@ -130,7 +187,7 @@
         <p class="text-xs text-muted-foreground text-center">Ahora estarías cerca de <strong x-text="posActual"></strong></p>
       </div>
 
-      <button id="btn-reset" class="btn w-full h-14 text-lg rounded-2xl mt-auto" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
+      <button id="btn-reset" class="btn w-full h-16 text-xl rounded-2xl mt-auto" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
     </section>
 
     <p class="text-center text-xs text-muted-foreground" x-show="step === 3">Estimación prorrateada: 48 min punta a punta.</p>
