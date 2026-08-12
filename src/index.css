@@ -1,0 +1,472 @@
+@import 'tailwindcss';
+
+/* ── Theme "Toshiba": amarillo Urquiza, antifaz negro, chevrones rojo/blanco ──
+   Van en @theme (no en :root) para que Tailwind v4 genere las utilities
+   (bg-background, text-muted-foreground, border-border…) además de las vars.
+   Antes esas utilities las aportaba basecoat-css. */
+@theme {
+  --color-background: #fbf5e9; /* crema cálido, papel de boletería */
+  --color-foreground: #26262a; /* gris antifaz, casi negro */
+  --color-card: #ffffff;
+  --color-card-foreground: #26262a;
+  --color-primary: #f2a900; /* amarillo Toshiba */
+  --color-primary-foreground: #26262a; /* texto negro sobre amarillo, como el tren */
+  --color-secondary: #f3ead5;
+  --color-secondary-foreground: #26262a;
+  --color-muted: #efe7d3;
+  --color-muted-foreground: #77716a;
+  --color-accent: #f3ead5;
+  --color-accent-foreground: #26262a;
+  --color-destructive: #c8102e; /* rojo chevron */
+  --color-border: #e4d9be;
+  --color-input: #e4d9be;
+  --color-ring: #f2a900;
+  --color-rail: #de8620; /* naranja del riel en el diagrama de línea */
+  --color-vagon: #63666a; /* gris del vagón / tarjeta de estación */
+  --color-dashed: #b9ac8c; /* borde punteado del botón fantasma */
+}
+
+/* Fondo moderno: glow ámbar arriba + líneas de velocidad diagonales apenas visibles */
+body {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(80% 45% at 50% -10%, rgb(242 169 0 / 0.18), transparent 70%),
+    radial-gradient(70% 40% at 50% 110%, rgb(38 38 42 / 0.07), transparent 70%),
+    repeating-linear-gradient(115deg, transparent 0 46px, rgb(38 38 42 / 0.025) 46px 48px);
+  background-attachment: fixed;
+}
+.chevron {
+  height: 0.5rem;
+  background: repeating-linear-gradient(135deg, var(--color-destructive) 0 12px, #fff 12px 24px);
+  border-radius: 9999px;
+}
+.sign {
+  display: inline-block;
+  background: var(--color-foreground);
+  color: #fff;
+  border-radius: 9999px;
+  padding: 0.375rem 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.hl {
+  background: linear-gradient(transparent 60%, rgb(242 169 0 / 0.5) 60%);
+  padding: 0 0.15em;
+}
+
+/* ── Paso 3: escena ferroviaria animada ── */
+@keyframes chug {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+@keyframes rails-l {
+  to {
+    background-position-x: -48px;
+  }
+}
+@keyframes rails-r {
+  to {
+    background-position-x: 48px;
+  }
+}
+@keyframes postes-l {
+  to {
+    background-position-x: -180px;
+  }
+}
+@keyframes postes-r {
+  to {
+    background-position-x: 180px;
+  }
+}
+@keyframes edif-l {
+  to {
+    background-position-x: -280px;
+  }
+}
+@keyframes edif-r {
+  to {
+    background-position-x: 280px;
+  }
+}
+@keyframes nubes-l {
+  to {
+    background-position-x: -340px;
+  }
+}
+@keyframes nubes-r {
+  to {
+    background-position-x: 340px;
+  }
+}
+/* -96px/384px y -64px/256px: múltiplos exactos del tile (96 y 64) para loopear sin salto */
+@keyframes lluvia-cae {
+  to {
+    background-position:
+      -96px 384px,
+      -64px 256px;
+  }
+}
+/* dos destellos por ciclo de 6s, cada uno sincronizado con su rayo */
+@keyframes relampago {
+  0%,
+  37%,
+  41%,
+  87%,
+  91%,
+  100% {
+    opacity: 0;
+  }
+  38%,
+  40% {
+    opacity: 0.45;
+  }
+  88%,
+  90% {
+    opacity: 0.55;
+  }
+}
+@keyframes rayo-1 {
+  0%,
+  37%,
+  41%,
+  100% {
+    opacity: 0;
+  }
+  38%,
+  40% {
+    opacity: 1;
+  }
+}
+@keyframes rayo-2 {
+  0%,
+  87%,
+  91%,
+  100% {
+    opacity: 0;
+  }
+  88%,
+  90% {
+    opacity: 1;
+  }
+}
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
+}
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.scene-content {
+  position: relative;
+  z-index: 10;
+  pointer-events: none;
+}
+/* cielo según clima */
+.scene--soleado {
+  background: linear-gradient(180deg, rgb(178 222 245 / 0.8), rgb(178 222 245 / 0) 75%);
+}
+.scene--nublado {
+  background: linear-gradient(180deg, rgb(190 196 202 / 0.8), rgb(190 196 202 / 0) 85%);
+}
+.scene--lluvia {
+  background: linear-gradient(180deg, rgb(150 162 173 / 0.85), rgb(150 162 173 / 0.1) 95%);
+}
+.scene--tormenta {
+  background: linear-gradient(180deg, rgb(103 115 128 / 0.9), rgb(103 115 128 / 0.15) 95%);
+}
+.scene-sol {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.875rem;
+  font-size: 1.75rem;
+  line-height: 1;
+  display: none;
+}
+.scene--soleado .scene-sol {
+  display: block;
+}
+.scene-nubes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 44px;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='340' height='44' viewBox='0 0 340 44'><g fill='white' fill-opacity='.9'><ellipse cx='44' cy='26' rx='28' ry='10'/><ellipse cx='64' cy='18' rx='18' ry='9'/><ellipse cx='196' cy='22' rx='32' ry='11'/><ellipse cx='222' cy='14' rx='17' ry='8'/></g></svg>");
+  background-repeat: repeat-x;
+  animation: nubes-l 30s linear infinite;
+}
+.scene--nublado .scene-nubes,
+.scene--lluvia .scene-nubes,
+.scene--tormenta .scene-nubes {
+  filter: brightness(0.82) saturate(0.5);
+}
+.scene-edificios {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  height: 68px;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='68' viewBox='0 0 280 68'><g fill='%2377716A' fill-opacity='.28'><rect x='0' y='26' width='34' height='42'/><rect x='40' y='10' width='26' height='58'/><line x1='53' y1='10' x2='53' y2='2' stroke='%2377716A' stroke-opacity='.28' stroke-width='2'/><rect x='72' y='34' width='40' height='34'/><rect x='126' y='16' width='22' height='52'/><rect x='158' y='30' width='36' height='38'/><rect x='206' y='6' width='28' height='62'/><rect x='240' y='38' width='30' height='30'/></g></svg>");
+  background-repeat: repeat-x;
+  background-position-y: bottom;
+  animation: edif-l 8s linear infinite;
+}
+.scene-postes {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='88' viewBox='0 0 180 88'><g stroke='%2377716A' stroke-opacity='.35' stroke-width='3'><line x1='30' y1='18' x2='30' y2='66'/><line x1='18' y1='24' x2='42' y2='24'/></g></svg>");
+  background-repeat: repeat-x;
+  background-position-y: bottom;
+  animation: postes-l 2.4s linear infinite;
+}
+/* dos capas de gotas: cercanas (grandes, rápidas) y lejanas (chicas, lentas, más tenues) */
+.scene-lluvia {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><g stroke='%234A6076' stroke-opacity='.4' stroke-width='2.5' stroke-linecap='round'><line x1='20' y1='4' x2='16.5' y2='18'/><line x1='70' y1='14' x2='66.5' y2='28'/><line x1='44' y1='46' x2='40.5' y2='60'/><line x1='88' y1='60' x2='84.5' y2='74'/></g></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><g stroke='%234A6076' stroke-opacity='.22' stroke-width='2' stroke-linecap='round'><line x1='32' y1='10' x2='28.5' y2='24'/><line x1='78' y1='40' x2='74.5' y2='54'/><line x1='10' y1='64' x2='6.5' y2='78'/></g></svg>");
+  background-size:
+    96px 96px,
+    64px 64px;
+  animation: lluvia-cae 2.2s linear infinite;
+}
+.scene--lluvia .scene-lluvia,
+.scene--tormenta .scene-lluvia {
+  display: block;
+}
+.scene--tormenta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: relampago 6s linear infinite;
+}
+.scene-rayo {
+  position: absolute;
+  font-size: 3rem;
+  line-height: 1;
+  opacity: 0;
+  display: none;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgb(255 220 80 / 0.9));
+}
+.scene--tormenta .scene-rayo {
+  display: block;
+}
+.scene-rayo--1 {
+  left: 18%;
+  top: 12%;
+  animation: rayo-1 6s linear infinite;
+}
+.scene-rayo--2 {
+  right: 22%;
+  top: 17%;
+  font-size: 2.25rem;
+  animation: rayo-2 6s linear infinite;
+}
+.scene-clima {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  font-size: 0.75rem;
+  padding: 0.25rem 1.5rem 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.8);
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2377716A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.375rem center;
+  background-size: 0.75rem;
+}
+.scene-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 14px;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='14' viewBox='0 0 24 14'><rect x='4' y='4' width='8' height='10' rx='1.5' fill='%2377716A' fill-opacity='.55'/><rect x='0' y='0' width='24' height='3.5' fill='%23DE8620'/></svg>");
+  background-repeat: repeat-x;
+  animation: rails-l 0.5s linear infinite;
+}
+.scene-tren {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  font-size: 2.25rem;
+  line-height: 1;
+  letter-spacing: -0.5em;
+  white-space: nowrap;
+  animation: chug 0.7s ease-in-out infinite;
+}
+.scene--rev .scene-postes {
+  animation-name: postes-r;
+}
+.scene--rev .scene-edificios {
+  animation-name: edif-r;
+}
+.scene--rev .scene-nubes {
+  animation-name: nubes-r;
+}
+.scene--rev .scene-rail {
+  animation-name: rails-r;
+}
+.scene--rev .scene-tren {
+  transform: translateX(-50%) scaleX(-1);
+}
+.scene--stop .scene-postes,
+.scene--stop .scene-rail,
+.scene--stop .scene-tren,
+.scene--stop .scene-edificios {
+  animation-play-state: paused;
+}
+/* las nubes y la lluvia siguen: el clima no frena cuando el tren para */
+
+/* señal de paso a nivel: luces rojas alternantes */
+.crossing {
+  display: inline-flex;
+  gap: 0.5rem;
+  vertical-align: middle;
+}
+.crossing i {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: var(--color-destructive);
+  animation: blink 1.2s steps(1) infinite;
+}
+.crossing i:last-child {
+  animation-delay: 0.6s;
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.pop {
+  animation: pop 0.5s ease-out both;
+}
+button,
+select {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn {
+  transition: transform 0.1s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Estilo diagrama de línea: tarjeta gris, riel naranja con estación blanca */
+.station-btn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 1rem 1.25rem 1rem 1.5rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: var(--color-vagon);
+  color: #fff;
+  box-shadow: 0 2px 6px rgb(38 38 42 / 0.18);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+  cursor: pointer;
+}
+.station-btn::before {
+  content: '';
+  position: absolute;
+  left: 2.0625rem;
+  top: 0;
+  bottom: 0;
+  width: 0.5rem;
+  background: var(--color-rail);
+  transform: translateX(-50%);
+}
+.station-btn:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.station-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.station-btn .text-muted-foreground {
+  color: rgb(255 255 255 / 0.65);
+}
+.station-dot {
+  position: relative;
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--color-rail);
+}
+.station-btn--ghost {
+  min-height: 4rem;
+  padding: 0.625rem 1.25rem;
+  background: rgb(255 255 255 / 0.6);
+  border: 1.5px dashed var(--color-dashed);
+  box-shadow: none;
+  color: var(--color-foreground);
+}
+.station-btn--ghost:active {
+  border-color: var(--color-rail);
+}
+.ghost-caret {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+.ghost-caret svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.station-btn--ghost::before {
+  display: none;
+}
+.station-btn--ghost .text-muted-foreground {
+  color: var(--color-muted-foreground);
+}
