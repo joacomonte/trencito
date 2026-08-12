@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Urquiza" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚆</text></svg>" />
+  <title>Tren Urquiza — ¿Cuánto falta?</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/basecoat.cdn.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/js/all.min.js" defer></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <style>[x-cloak]{display:none!important}</style>
+  <script>
+    function app() {
+      const S = ['Federico Lacroze','Artigas','Arata','Francisco Beiró','El Libertador','Devoto','Lynch','Fernández Moreno','Lourdes','Tropezón','J.M. Bosch','Martín Coronado','Pablo Podestá','Jorge Newbery','Rubén Darío','Ejército de los Andes','Lasalle','Sargento Barrufaldi','Capitán Lozano','Teniente Agneta','Campo de Mayo','Sargento Cabral','General Lemos'];
+      const TOTAL = 48;
+      const cum = i => i * TOTAL / (S.length - 1);
+      return {
+        S, step: 1, origin: '', dir: 0, dest: null, otra: false,
+        t0: null, etaTs: null, now: Date.now(),
+        init() { setInterval(() => this.now = Date.now(), 1000) },
+        get o() { return +this.origin },
+        get terminal() { return this.dir === 1 ? S.length - 1 : 0 },
+        get intermedias() {
+          const list = [];
+          for (let i = this.o + this.dir; i !== this.terminal && i >= 0 && i < S.length; i += this.dir) list.push(i);
+          return list;
+        },
+        elegirDir(d) { this.dir = d; this.otra = false; this.step = 3 },
+        elegir(i) {
+          this.dest = +i;
+          const min = Math.abs(cum(this.dest) - cum(this.o));
+          this.t0 = Date.now();
+          this.etaTs = this.t0 + min * 60000;
+          this.step = 4;
+        },
+        get restanteMs() { return Math.max(0, this.etaTs - this.now) },
+        get llegue() { return this.restanteMs === 0 },
+        get restanteMin() { return Math.floor(this.restanteMs / 60000) },
+        get restanteSeg() { return String(Math.floor(this.restanteMs / 1000) % 60).padStart(2, '0') },
+        get etaTxt() { return new Date(this.etaTs).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) },
+        get progreso() {
+          const tot = this.etaTs - this.t0;
+          return Math.min(100, Math.round((this.now - this.t0) / tot * 100));
+        },
+        get posActual() {
+          const pos = cum(this.o) + this.dir * (this.now - this.t0) / 60000;
+          let best = this.o;
+          for (const i of [...this.intermedias, this.dest, this.o]) {
+            if (Math.abs(cum(i) - pos) < Math.abs(cum(best) - pos)) best = i;
+          }
+          return S[best];
+        },
+        reset() { this.step = 1; this.origin = ''; this.dir = 0; this.dest = null; this.otra = false }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+
+  <main x-data="app()" x-cloak class="max-w-sm mx-auto p-5 pt-8 space-y-6">
+
+    <header class="text-center space-y-1">
+      <h1 class="text-2xl font-bold">🚆 Tren Urquiza</h1>
+      <p class="text-sm text-muted-foreground" x-show="step < 4">¿Cuánto falta para llegar?</p>
+    </header>
+
+    <section x-show="step === 1" class="space-y-3">
+      <h2 class="font-semibold text-lg">¿En qué estación estás?</h2>
+      <button id="btn-origen-lacroze" class="btn w-full h-16 text-lg" @click="origin = 0; otra = false; step = 2">Federico Lacroze</button>
+      <button id="btn-origen-lemos" class="btn w-full h-16 text-lg" data-variant="secondary" @click="origin = S.length - 1; otra = false; step = 2">General Lemos</button>
+      <button id="btn-origen-otra" class="btn w-full h-12" data-variant="outline" @click="otra = !otra">Otra estación ▾</button>
+      <select id="sel-origen" class="select w-full h-12 text-base" x-show="otra" x-model="origin" @change="otra = false; step = 2">
+        <option value="" disabled selected>Elegí tu estación…</option>
+        <template x-for="(n, i) in S" :key="i">
+          <option :value="i" x-text="n"></option>
+        </template>
+      </select>
+    </section>
+
+    <section x-show="step === 2" class="space-y-3">
+      <h2 class="font-semibold text-lg">¿Hacia dónde vas?</h2>
+      <div class="grid gap-3">
+        <button id="btn-dir-lemos" class="btn h-16 text-lg" :disabled="o === S.length - 1" @click="elegirDir(1)">→ General Lemos</button>
+        <button id="btn-dir-lacroze" class="btn h-16 text-lg" data-variant="secondary" :disabled="o === 0" @click="elegirDir(-1)">→ Federico Lacroze</button>
+      </div>
+      <button class="btn w-full" data-variant="ghost" @click="step = 1">← Volver</button>
+    </section>
+
+    <section x-show="step === 3" class="space-y-3">
+      <h2 class="font-semibold text-lg">¿Dónde te bajás?</h2>
+      <button id="btn-terminal" class="btn w-full h-20 text-xl" @click="elegir(terminal)">
+        🏁 <span x-text="S[terminal]"></span>
+      </button>
+      <button id="btn-otra" class="btn w-full h-12" data-variant="outline" @click="otra = !otra">Otra estación ▾</button>
+      <select id="sel-destino" class="select w-full h-12 text-base" x-show="otra" @change="elegir($event.target.value)">
+        <option value="" disabled selected>Elegí la estación…</option>
+        <template x-for="i in intermedias" :key="i">
+          <option :value="i" x-text="S[i]"></option>
+        </template>
+      </select>
+      <button class="btn w-full" data-variant="ghost" @click="step = 2">← Volver</button>
+    </section>
+
+    <section x-show="step === 4" class="space-y-5" x-cloak>
+      <p class="text-center text-sm text-muted-foreground">
+        <span x-text="S[o]"></span> → <span class="font-medium text-foreground" x-text="S[dest]"></span>
+      </p>
+
+      <div class="card text-center py-8 space-y-2">
+        <template x-if="!llegue">
+          <div class="space-y-2">
+            <p class="text-6xl font-bold tabular-nums">
+              <span x-text="restanteMin"></span><span class="text-3xl text-muted-foreground">:<span x-text="restanteSeg"></span></span>
+            </p>
+            <p class="text-sm text-muted-foreground">minutos restantes</p>
+            <p class="text-lg">Llegada estimada: <strong class="tabular-nums" x-text="etaTxt"></strong></p>
+          </div>
+        </template>
+        <template x-if="llegue">
+          <div class="space-y-2">
+            <p class="text-5xl">🎉</p>
+            <p class="text-xl font-semibold">Llegaste a <span x-text="S[dest]"></span></p>
+          </div>
+        </template>
+      </div>
+
+      <div class="space-y-2" x-show="!llegue">
+        <div class="h-2 rounded-full bg-muted overflow-hidden">
+          <div class="h-full bg-primary transition-all duration-1000" :style="`width:${progreso}%`"></div>
+        </div>
+        <p class="text-xs text-muted-foreground text-center">Ahora estarías cerca de <strong x-text="posActual"></strong></p>
+      </div>
+
+      <button id="btn-reset" class="btn w-full h-12" data-variant="outline" @click="reset()">↺ Nuevo viaje</button>
+    </section>
+
+    <p class="text-center text-xs text-muted-foreground" x-show="step === 4">Estimación prorrateada: 48 min punta a punta.</p>
+  </main>
+
+  <!-- Toaster global: dispará con document.getElementById('toaster').toast({...}) -->
+  <div id="toaster" class="toaster" data-align="end"></div>
+</body>
+</html>
