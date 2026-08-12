@@ -21,7 +21,7 @@
       const TOTAL = 48;
       const cum = i => i * TOTAL / (S.length - 1);
       return {
-        S, step: 1, origin: '', dir: 0, dest: null, otra: false,
+        S, step: 1, origin: '', dir: 0, dest: null,
         t0: null, etaTs: null, now: Date.now(),
         init() { setInterval(() => this.now = Date.now(), 1000) },
         get o() { return +this.origin },
@@ -31,7 +31,7 @@
           for (let i = this.o + this.dir; i !== this.terminal && i >= 0 && i < S.length; i += this.dir) list.push(i);
           return list;
         },
-        elegirDir(d) { this.dir = d; this.otra = false; this.step = 3 },
+        elegirDir(d) { this.dir = d; this.step = 3 },
         elegir(i) {
           this.dest = +i;
           const min = Math.abs(cum(this.dest) - cum(this.o));
@@ -56,7 +56,7 @@
           }
           return S[best];
         },
-        reset() { this.step = 1; this.origin = ''; this.dir = 0; this.dest = null; this.otra = false }
+        reset() { this.step = 1; this.origin = ''; this.dir = 0; this.dest = null }
       }
     }
   </script>
@@ -72,11 +72,10 @@
 
     <section x-show="step === 1" class="space-y-3">
       <h2 class="font-semibold text-lg">¿En qué estación estás?</h2>
-      <button id="btn-origen-lacroze" class="btn w-full h-16 text-lg" @click="origin = 0; otra = false; step = 2">Federico Lacroze</button>
-      <button id="btn-origen-lemos" class="btn w-full h-16 text-lg" data-variant="secondary" @click="origin = S.length - 1; otra = false; step = 2">General Lemos</button>
-      <button id="btn-origen-otra" class="btn w-full h-12" data-variant="outline" @click="otra = !otra">Otra estación ▾</button>
-      <select id="sel-origen" class="select w-full h-12 text-base" x-show="otra" x-model="origin" @change="otra = false; step = 2">
-        <option value="" disabled selected>Elegí tu estación…</option>
+      <button id="btn-origen-lacroze" class="btn w-full h-16 text-lg" @click="origin = 0; step = 2">Federico Lacroze</button>
+      <button id="btn-origen-lemos" class="btn w-full h-16 text-lg" data-variant="secondary" @click="origin = S.length - 1; step = 2">General Lemos</button>
+      <select id="sel-origen" class="select w-full h-12 text-base" x-model="origin" @change="step = 2">
+        <option value="" disabled selected>Otra estación…</option>
         <template x-for="(n, i) in S" :key="i">
           <option :value="i" x-text="n"></option>
         </template>
@@ -97,9 +96,8 @@
       <button id="btn-terminal" class="btn w-full h-20 text-xl" @click="elegir(terminal)">
         🏁 <span x-text="S[terminal]"></span>
       </button>
-      <button id="btn-otra" class="btn w-full h-12" data-variant="outline" @click="otra = !otra">Otra estación ▾</button>
-      <select id="sel-destino" class="select w-full h-12 text-base" x-show="otra" @change="elegir($event.target.value)">
-        <option value="" disabled selected>Elegí la estación…</option>
+      <select id="sel-destino" class="select w-full h-12 text-base" @change="elegir($event.target.value); $event.target.selectedIndex = 0">
+        <option value="" disabled selected>Otra estación…</option>
         <template x-for="i in intermedias" :key="i">
           <option :value="i" x-text="S[i]"></option>
         </template>
