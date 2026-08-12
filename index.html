@@ -36,13 +36,13 @@
           for (let i = this.o + this.dir; i !== this.terminal && i >= 0 && i < S.length; i += this.dir) list.push(i);
           return list;
         },
-        elegirDir(d) { this.dir = d; this.step = 3 },
         elegir(i) {
           this.dest = +i;
+          this.dir = this.dest > this.o ? 1 : -1;
           const min = Math.abs(cum(this.dest) - cum(this.o));
           this.t0 = Date.now();
           this.etaTs = this.t0 + min * 60000;
-          this.step = 4;
+          this.step = 3;
         },
         get restanteMs() { return Math.max(0, this.etaTs - this.now) },
         get llegue() { return this.restanteMs === 0 },
